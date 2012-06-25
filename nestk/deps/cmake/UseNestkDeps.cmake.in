@@ -1,0 +1,77 @@
+SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${nestk_deps_SOURCE_DIR}/cmake)
+
+INCLUDE_DIRECTORIES(${nestk_deps_SOURCE_DIR}/include)
+INCLUDE_DIRECTORIES( BEFORE ${nestk_deps_SOURCE_DIR} ${nestk_deps_BINARY_DIR} )
+
+## Eigen stuff.
+INCLUDE_DIRECTORIES( ${nestk_deps_SOURCE_DIR}/eigen)
+
+# For libfreenect
+IF (NESTK_USE_FREENECT AND NESTK_USE_EMBEDDED_FREENECT)
+    if (WIN32)
+      include_directories("${nestk_deps_SOURCE_DIR}/libfreenect/platform/windows")
+      include_directories("${nestk_deps_SOURCE_DIR}/libfreenect/platform/windows/libusb10emu")
+    endif()
+    include_directories(${nestk_deps_SOURCE_DIR}/libfreenect/include)
+    ## LIBUSB
+    if(WIN32)
+      include_directories("${nestk_deps_SOURCE_DIR}/libfreenect/platform/windows")
+      include_directories("${nestk_deps_SOURCE_DIR}/libfreenect/platform/windows/libusb10emu")
+     endif()
+    INCLUDE_DIRECTORIES(${LIBUSB_1_INCLUDE_DIR})
+    SET(FREENECT_LIBRARIES freenect)
+ENDIF(NESTK_USE_FREENECT AND NESTK_USE_EMBEDDED_FREENECT)
+
+# For OpenNI
+IF (NESTK_USE_OPENNI AND NESTK_USE_EMBEDDED_OPENNI)
+    SET(NITE_LIBRARIES XnVNite)
+    SET(OPENNI_LIBRARIES OpenNI ${NITE_LIBRARIES})
+    ADD_DEFINITIONS(-DNESTK_USE_OPENNI)
+
+    SET(OPENNI_INCLUDE_DIR "${nestk_deps_SOURCE_DIR}/openni/Include/")
+    SET(NITE_INCLUDE_DIR "${nestk_deps_SOURCE_DIR}/openni/Nite/Include/")
+    INCLUDE_DIRECTORIES(${LIBUSB_1_INCLUDE_DIR})
+    IF(APPLE)
+      SET(NITE_LIBRARY_DIR ${LIBRARY_OUTPUT_PATH} ${EXECUTABLE_OUTPUT_PATH})
+    ELSEIF(UNIX)
+      IF (ARCHITECTURE_IS_X86_64)
+        SET(NITE_LIBRARY_DIR "${nestk_deps_SOURCE_DIR}/openni/Nite/Lib/Linux64")
+      ELSE()
+        SET(NITE_LIBRARY_DIR "${nestk_deps_SOURCE_DIR}/openni/Nite/Lib/Linux32")
+      ENDIF()
+    ENDIF()
+    INCLUDE_DIRECTORIES(${OPENNI_INCLUDE_DIR} ${NITE_INCLUDE_DIR})
+    LINK_DIRECTORIES(${OPENNI_LIBRARY_DIR} ${NITE_LIBRARY_DIR})
+ENDIF()
+
+# opengl
+FIND_PACKAGE(OpenGL REQUIRED)
+
+# GLUT
+FIND_PACKAGE(GLUT REQUIRED)
+INCLUDE_DIRECTORIES(${GLUT_INCLUDE_DIR})
+
+# X11
+FIND_LIBRARY(X11_LIBRARY X11)
+IF (NOT X11_LIBRARY)
+  SET(X11_LIBRARY "")
+ENDIF()
+
+# GLEW
+IF (NESTK_USE_EMBEDDED_GLEW)
+  set(GLEW_INCLUDE_DIR "${nestk_deps_SOURCE_DIR}/glew/include" CACHE FILEPATH "" FORCE)
+  INCLUDE_DIRECTORIES(${GLEW_INCLUDE_DIR})
+  set(GLEW_LIBRARIES "glew" CACHE FILEPATH "" FORCE)
+  ADD_DEFINITIONS(-DNESTK_USE_GLEW)
+ENDIF()
+
+# OPENCL
+IF (NESTK_USE_EMBEDDED_OPENCL)
+  FIND_PACKAGE(OPENCL)
+  INCLUDE_DIRECTORIES(${nestk_deps_SOURCE_DIR}/opencl11)
+  IF (OPENCL_FOUND)
+    ADD_DEFINITIONS(-DNESTK_USE_OPENCL)
+    SET(OPENCL_LIBRARIES OpenCL)
+    SET(HAVE_OPENCL 1)
+  ENDIF()
+ENDIF()
